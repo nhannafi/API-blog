@@ -5,7 +5,7 @@
  *
  * @return void
  */
-public function getArticles()
+public function getAll()
 {
     try {
         $query = $this->pdo->query("SELECT * FROM article");
@@ -23,7 +23,7 @@ public function getArticles()
  * @param integer $id
  * @return void
  */
-public function getArticle(int $id)
+public function getOne(int $id)
 {
     try {
         if (is_int($id)) {
@@ -45,7 +45,7 @@ public function getArticle(int $id)
  * @param array $data
  * @return void
  */
-public function postArticle(array $data)
+public function postOne(array $data)
 {
     try {
         foreach ($data as $key => $value) {
@@ -53,7 +53,7 @@ public function postArticle(array $data)
         }
 
         $prepare = $this->pdo->prepare("INSERT INTO article (title, content, categorie_id)
-                                        VALUES (:title, :content, :categorie_id");
+                                        VALUES (:title, :content, :categorie_id) ");
         $prepare->execute($data);
 
         General::sendData(200, "Article enregistré!");
@@ -69,22 +69,26 @@ public function postArticle(array $data)
  * @param array $data
  * @return void
  */
-public function updateArticle(array $data)
+public function updateOne(int $id, string $json)
 {
     try {
-        foreach ($data as $key => $value) {
-            $data[$key] = htmlspecialchars($value);
-        }
-
+        
+        $data = json_decode($json);
+        // foreach ($data as $key => $value) {
+        //     $data[$key] = htmlspecialchars($value);
+        // }
         $prepare = $this->pdo->prepare("UPDATE article SET 
             title = :title,
             content = :content,
             categorie_id = :categorie_id
-            WHERE id = :id
-        )");
-        $prepare->execute($data);
+            WHERE id = $id
+            ");
+            $prepare->bindParam(":title", $data->title);
+            $prepare->bindParam(":content", $data->content);
+            $prepare->bindParam(":categorie_id", $data->categorie_id);
+            $prepare->execute();
 
-        $query = $this->pdo->query("SELECT * FROM article WHERE id = ". $data["id"]);
+            $query = $this->pdo->query("SELECT * FROM article WHERE id = $id"); 
 
         General::sendData(200, "Article modifié!", $query->fetch(PDO::FETCH_OBJ));
 
@@ -99,7 +103,7 @@ public function updateArticle(array $data)
  * @param integer $id
  * @return void
  */
-public function deleteArticle(int $id)
+public function deleteOne(int $id)
 {
     try {
         if (is_int($id)) {
